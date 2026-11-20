@@ -1,0 +1,17 @@
+{
+  "name": "docky-api",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "parse": "node cli.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "fast-xml-parser": "^5.2.0",
+    "fflate": "^0.8.3",
+    "mssql": "^12.7.14"
+  }
+}
