@@ -78,7 +78,7 @@ Dark mode and every palette apply everywhere at once:
 **Requirements:** Node.js 20.19+ or 22.12+ (Vite 8 needs it), and npm.
 
 ```bash
-git clone <your-repo-url> docky
+git clone https://github.com/ismael2314/docky-SSISExplorer.git docky
 cd docky
 
 # 1. The API (reads your packages)
@@ -217,7 +217,3 @@ docky/
 ## Contributing
 
 Issues and pull requests are welcome. Run `npm run typecheck` before sending changes. To work on the parser, `npm run parse` (in `server/`) prints the model for one file without starting the API.
-
-## License
-
-No license has been chosen yet. Add a `LICENSE` file before publishing or accepting contributions.
