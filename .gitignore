@@ -25,3 +25,7 @@ dist-ssr
 
 # Docky API runtime data (saved SQL settings)
 server/data
+
+# Your own SSIS files stay local: they hold server names, user names and business logic
+server/packages/*
+!server/packages/.gitkeep

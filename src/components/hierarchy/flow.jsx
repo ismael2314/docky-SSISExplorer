@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import {
-  Background, Controls, Handle, MarkerType, MiniMap, Position, ReactFlow, ReactFlowProvider, useReactFlow,
+  Background, Controls, Handle, MarkerType, MiniMap, Position, ReactFlow, ReactFlowProvider, useNodesInitialized, useReactFlow, useStore,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import dagre from '@dagrejs/dagre'
@@ -208,6 +208,30 @@ export function buildFlow(root, open, { search, activeKey, selectedKey, onToggle
   return { nodes, edges } // boxes come before what is inside them, as React Flow needs
 }
 
+// First view. A small hierarchy is fitted whole. A tall one would shrink to unreadable text, so it opens
+// at a readable zoom, centred on the top (the start of the run); the minimap and fit button give the overview.
+function InitialView({ rootNode }) {
+  const { fitView, setViewport } = useReactFlow()
+  const ready = useNodesInitialized()
+  const width = useStore((s) => s.width)
+  const height = useStore((s) => s.height)
+  const done = useRef(false)
+  useEffect(() => {
+    if (!ready || done.current || !width || !height) return
+    done.current = true
+    const w = rootNode.width ?? W
+    const h = rootNode.height ?? H
+    const zoomToWidth = width / (w + 80)
+    if (Math.min(zoomToWidth, height / (h + 80)) >= 0.6) {
+      fitView({ padding: 0.1, maxZoom: 1 })
+      return
+    }
+    const zoom = Math.min(0.85, Math.max(0.4, zoomToWidth))
+    setViewport({ x: (width - w * zoom) / 2, y: 24, zoom })
+  }, [ready, width, height, rootNode, fitView, setViewport])
+  return null
+}
+
 // Moves the view to the active search match (once per jump, and once the card exists on screen).
 function Focus({ nodes, targetKey, token }) {
   const { setCenter } = useReactFlow()
@@ -236,7 +260,6 @@ function Inner({ root, open, onToggle, search, activeKey, token, selectedKey, on
       edges={edges}
       nodeTypes={nodeTypes}
       colorMode={theme}
-      fitView
       minZoom={0.05}
       nodesDraggable={false}
       nodesConnectable={false}
@@ -248,6 +271,7 @@ function Inner({ root, open, onToggle, search, activeKey, token, selectedKey, on
       <Background />
       <Controls showInteractive={false} />
       <MiniMap pannable zoomable nodeStrokeWidth={2} nodeColor={(n) => `var(--kind-${n.data?.kind === 'task' ? 'other' : n.data?.kind ?? 'other'})`} />
+      <InitialView rootNode={nodes[0]} />
       <Focus nodes={nodes} targetKey={activeKey} token={token} />
     </ReactFlow>
   )

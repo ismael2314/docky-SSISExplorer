@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow, Background, Controls, MiniMap, Panel, MarkerType,
-  applyNodeChanges, useNodesInitialized, useReactFlow,
+  applyNodeChanges, useNodesInitialized, useReactFlow, useStore,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { TaskNode } from './nodes/TaskNode'
@@ -92,18 +92,27 @@ export function toFlow(g) {
   return { nodes: layout(nodes, edges), edges }
 }
 
-// Fit the diagram into the view once every card has been measured. Fitting earlier, as the
-// fitView prop does, uses sizes that are not known yet and leaves the diagram off-centre.
+// First view. A diagram that stays legible when fitted whole is fitted. A wide one would shrink to
+// unreadable text, so it opens at a readable zoom at the left, where the run starts; the minimap and
+// the fit button give the overview. Runs once, after every card has been measured.
 function FitWhenReady() {
-  const { fitView } = useReactFlow()
+  const { fitView, getNodes, getNodesBounds, setViewport } = useReactFlow()
   const ready = useNodesInitialized()
+  const width = useStore((s) => s.width)
+  const height = useStore((s) => s.height)
   const done = useRef(false)
   useEffect(() => {
-    if (ready && !done.current) {
-      done.current = true
+    if (!ready || done.current || !width || !height) return
+    done.current = true
+    const b = getNodesBounds(getNodes())
+    const fits = Math.min(width / (b.width + 80), height / (b.height + 80))
+    if (fits >= 0.6) {
       fitView({ padding: 0.12, maxZoom: 1 }) // never magnify a small diagram beyond 100%
+      return
     }
-  }, [ready, fitView])
+    const zoom = 0.7
+    setViewport({ x: 40 - b.x * zoom, y: (height - b.height * zoom) / 2 - b.y * zoom, zoom })
+  }, [ready, width, height, fitView, getNodes, getNodesBounds, setViewport])
   return null
 }
 
@@ -164,7 +173,6 @@ export function FlowCanvas({ graph, layoutKey, selectedId, onSelect, onOpen }) {
       edges={auto.edges}
       nodeTypes={nodeTypes}
       colorMode={theme}
-      fitView
       minZoom={0.1}
       onNodesChange={onNodesChange}
       nodesConnectable={false}
